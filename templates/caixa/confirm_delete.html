@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Remover Movimento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">Confirmar exclusao</div>
+            <div class="card-body">
+                <p>Tem certeza de que deseja remover o movimento <strong>#{{ movimento.id }}</strong>?</p>
+                <p><strong>Historico:</strong> {{ movimento.historico }}</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a class="btn btn-outline-secondary" href="{% url 'caixa:movimento_list' %}">Cancelar</a>
+                        <button class="btn btn-danger" type="submit">Excluir</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

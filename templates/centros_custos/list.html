@@ -1,0 +1,41 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Centros de Custo{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Centros de Custo</h1>
+    <div class="btn-group" role="group">
+        <a class="btn btn-outline-secondary" href="{% url 'centros_custos:export_pdf' %}">Gerar PDF</a>
+        <a class="btn btn-outline-success" href="{% url 'centros_custos:export_excel' %}">Gerar Excel</a>
+        <a class="btn btn-primary" href="{% url 'centros_custos:create' %}">Novo centro</a>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descricao</th>
+                <th class="text-center">Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for centro in centros %}
+            <tr>
+                <td>{{ centro.id }}</td>
+                <td>{{ centro.descricao }}</td>
+                <td class="text-center">
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'centros_custos:update' centro.pk %}">Editar</a>
+                    <a class="btn btn-sm btn-outline-danger" href="{% url 'centros_custos:delete' centro.pk %}">Excluir</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td class="text-center" colspan="3">Nenhum centro de custo cadastrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

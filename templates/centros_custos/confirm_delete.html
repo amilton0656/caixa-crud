@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Remover Centro de Custo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">Confirmar exclusao</div>
+            <div class="card-body">
+                <p>Tem certeza de que deseja remover o centro de custo <strong>{{ centro.descricao }}</strong>?</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a class="btn btn-outline-secondary" href="{% url 'centros_custos:list' %}">Cancelar</a>
+                        <button class="btn btn-danger" type="submit">Excluir</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
