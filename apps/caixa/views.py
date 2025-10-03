@@ -1,9 +1,11 @@
-﻿from io import BytesIO
+﻿from datetime import datetime
+from io import BytesIO
 import textwrap
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -11,6 +13,9 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from openpyxl import Workbook
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+
+from apps.centros_custos.models import CentroCusto
+from apps.obras.models import Obra
 
 from .forms import MovimentoForm
 from .models import Movimento
@@ -42,7 +47,57 @@ def logout_view(request):
 @login_required
 def movimento_list(request):
     movimentos = Movimento.objects.select_related('obra', 'centro_custos')
-    return render(request, 'caixa/list.html', {'movimentos': movimentos})
+
+    obra_id = request.GET.get('obra', '').strip()
+    centro_id = request.GET.get('centro_custos', '').strip()
+    data_inicio = request.GET.get('data_inicio', '').strip()
+    data_fim = request.GET.get('data_fim', '').strip()
+    busca_historico = request.GET.get('historico', '').strip()
+
+    if obra_id:
+        movimentos = movimentos.filter(obra_id=obra_id)
+    if centro_id:
+        movimentos = movimentos.filter(centro_custos_id=centro_id)
+    if data_inicio:
+        try:
+            inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+            movimentos = movimentos.filter(data__gte=inicio)
+        except ValueError:
+            messages.warning(request, 'Data inicial invalida.')
+    if data_fim:
+        try:
+            fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+            movimentos = movimentos.filter(data__lte=fim)
+        except ValueError:
+            messages.warning(request, 'Data final invalida.')
+    if busca_historico:
+        movimentos = movimentos.filter(historico__icontains=busca_historico)
+
+    paginator = Paginator(movimentos, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+
+    context = {
+        'movimentos': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'is_paginated': page_obj.has_other_pages(),
+        'obras': Obra.objects.all(),
+        'centros': CentroCusto.objects.all(),
+        'filters': {
+            'obra': obra_id,
+            'centro_custos': centro_id,
+            'data_inicio': data_inicio,
+            'data_fim': data_fim,
+            'historico': busca_historico,
+        },
+        'show_filters': any([obra_id, centro_id, data_inicio, data_fim, busca_historico]),
+        'querystring': query_params.urlencode(),
+    }
+    return render(request, 'caixa/list.html', context)
 
 
 @login_required
@@ -95,7 +150,7 @@ def movimento_export_pdf(request):
     for movimento in movimentos:
         line = (
             f"ID: {movimento.id} | Obra: {movimento.obra.nome} | Centro: {movimento.centro_custos.descricao} | "
-            f"Data: {movimento.data:%d/%m/%Y} | Sinal: {movimento.get_sinal_display()} | Historico: {movimento.historico}"
+            f"Data: {movimento.data:%d/%m/%Y} | Sinal: {movimento.get_sinal_display()} | Valor: {movimento.valor:.2f} | Historico: {movimento.historico}"
         )
         for wrapped_line in textwrap.wrap(line, width=100):
             pdf.drawString(40, y_position, wrapped_line)
@@ -124,7 +179,7 @@ def movimento_export_excel(request):
     worksheet = workbook.active
     worksheet.title = 'Movimentos'
 
-    worksheet.append(['ID', 'Obra', 'Centro de Custo', 'Data', 'Sinal', 'Historico'])
+    worksheet.append(['ID', 'Obra', 'Centro de Custo', 'Data', 'Sinal', 'Valor', 'Historico'])
     movimentos = Movimento.objects.select_related('obra', 'centro_custos')
     for movimento in movimentos:
         worksheet.append([
@@ -133,6 +188,7 @@ def movimento_export_excel(request):
             movimento.centro_custos.descricao,
             movimento.data.strftime('%d/%m/%Y'),
             movimento.get_sinal_display(),
+            movimento.valor,
             movimento.historico,
         ])
 
@@ -146,3 +202,19 @@ def movimento_export_excel(request):
     )
     response['Content-Disposition'] = 'attachment; filename=movimentos.xlsx'
     return response
+
+from io import BytesIO
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
+
+def entregar_pdf(request):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer)
+    p.drawString(100, 750, "Olá, PDF gerado com ReportLab!")
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    resp = FileResponse(buffer, content_type="application/pdf")
+    resp["Content-Disposition"] = 'attachment; filename="hello.pdf"'
+    return resp
+

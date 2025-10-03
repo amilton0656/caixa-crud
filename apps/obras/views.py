@@ -1,6 +1,7 @@
 ﻿from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -15,7 +16,28 @@ from .models import Obra
 @login_required
 def obra_list(request):
     obras = Obra.objects.all()
-    return render(request, 'obras/list.html', {'obras': obras})
+
+    busca = request.GET.get('busca', '').strip()
+    if busca:
+        obras = obras.filter(nome__icontains=busca)
+
+    paginator = Paginator(obras, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+
+    context = {
+        'obras': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'is_paginated': page_obj.has_other_pages(),
+        'filters': {'busca': busca},
+        'show_filters': bool(busca),
+        'querystring': query_params.urlencode(),
+    }
+    return render(request, 'obras/list.html', context)
 
 
 @login_required

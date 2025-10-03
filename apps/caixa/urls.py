@@ -11,4 +11,5 @@ urlpatterns = [
     path('<int:pk>/excluir/', views.movimento_delete, name='movimento_delete'),
     path('exportar/pdf/', views.movimento_export_pdf, name='export_pdf'),
     path('exportar/excel/', views.movimento_export_excel, name='export_excel'),
+    path('entregar_pdf/', views.entregar_pdf, name='entregar_pdf')
 ]

@@ -1,6 +1,7 @@
 ﻿from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -15,7 +16,28 @@ from .models import CentroCusto
 @login_required
 def centrocusto_list(request):
     centros = CentroCusto.objects.all()
-    return render(request, 'centros_custos/list.html', {'centros': centros})
+
+    descricao = request.GET.get('descricao', '').strip()
+    if descricao:
+        centros = centros.filter(descricao__icontains=descricao)
+
+    paginator = Paginator(centros, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+
+    context = {
+        'centros': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'is_paginated': page_obj.has_other_pages(),
+        'filters': {'descricao': descricao},
+        'show_filters': bool(descricao),
+        'querystring': query_params.urlencode(),
+    }
+    return render(request, 'centros_custos/list.html', context)
 
 
 @login_required

@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}Remover Movimento{% endblock %}
 
@@ -9,6 +9,7 @@
             <div class="card-header bg-danger text-white">Confirmar exclusao</div>
             <div class="card-body">
                 <p>Tem certeza de que deseja remover o movimento <strong>#{{ movimento.id }}</strong>?</p>
+                <p><strong>Valor:</strong> {{ movimento.valor|floatformat:2 }}</p>
                 <p><strong>Historico:</strong> {{ movimento.historico }}</p>
                 <form method="post">
                     {% csrf_token %}

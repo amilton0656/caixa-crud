@@ -6,9 +6,50 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Movimentos</h1>
     <div class="btn-group" role="group">
+        <button class="btn btn-outline-dark" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosMovimentos" aria-expanded="{{ show_filters|yesno:'true,false' }}" aria-controls="filtrosMovimentos">Filtros</button>
         <a class="btn btn-outline-secondary" href="{% url 'caixa:export_pdf' %}">Gerar PDF</a>
         <a class="btn btn-outline-success" href="{% url 'caixa:export_excel' %}">Gerar Excel</a>
         <a class="btn btn-primary" href="{% url 'caixa:movimento_create' %}">Novo movimento</a>
+    </div>
+</div>
+<div class="collapse mb-3{% if show_filters %} show{% endif %}" id="filtrosMovimentos">
+    <div class="card card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label" for="filtroObra">Obra</label>
+                <select class="form-select" id="filtroObra" name="obra">
+                    <option value="">Todas</option>
+                    {% for obra in obras %}
+                    <option value="{{ obra.id }}" {% if filters.obra == obra.id|stringformat:"s" %}selected{% endif %}>{{ obra.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="filtroCentro">Centro de Custo</label>
+                <select class="form-select" id="filtroCentro" name="centro_custos">
+                    <option value="">Todos</option>
+                    {% for centro in centros %}
+                    <option value="{{ centro.id }}" {% if filters.centro_custos == centro.id|stringformat:"s" %}selected{% endif %}>{{ centro.descricao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="filtroDataInicio">Data inicial</label>
+                <input class="form-control" type="date" id="filtroDataInicio" name="data_inicio" value="{{ filters.data_inicio }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="filtroDataFim">Data final</label>
+                <input class="form-control" type="date" id="filtroDataFim" name="data_fim" value="{{ filters.data_fim }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="filtroHistorico">Busca no Historico</label>
+                <input class="form-control" type="text" id="filtroHistorico" name="historico" value="{{ filters.historico }}" placeholder="Digite parte do historico">
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a class="btn btn-outline-secondary" href="{% url 'caixa:movimento_list' %}">Limpar</a>
+                <button class="btn btn-primary" type="submit">Aplicar</button>
+            </div>
+        </form>
     </div>
 </div>
 <div class="table-responsive">
@@ -20,6 +61,7 @@
                 <th>Centro de Custo</th>
                 <th>Data</th>
                 <th>Sinal</th>
+                <th class="text-end">Valor</th>
                 <th>Historico</th>
                 <th class="text-center">Acoes</th>
             </tr>
@@ -32,6 +74,7 @@
                 <td>{{ movimento.centro_custos.descricao }}</td>
                 <td>{{ movimento.data|date:'d/m/Y' }}</td>
                 <td>{{ movimento.get_sinal_display }}</td>
+                <td class="text-end">{{ movimento.valor|floatformat:2 }}</td>
                 <td>{{ movimento.historico }}</td>
                 <td class="text-center">
                     <a class="btn btn-sm btn-outline-secondary" href="{% url 'caixa:movimento_update' movimento.pk %}">Editar</a>
@@ -40,10 +83,27 @@
             </tr>
             {% empty %}
             <tr>
-                <td class="text-center" colspan="7">Nenhum movimento cadastrado.</td>
+                <td class="text-center" colspan="8">Nenhum movimento cadastrado.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% if is_paginated %}
+<nav aria-label="Paginacao" class="mt-3">
+    <ul class="pagination justify-content-center mb-0">
+        <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
+            <a class="page-link" href="{% if page_obj.has_previous %}?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}{% else %}#{% endif %}" tabindex="-1">Anterior</a>
+        </li>
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item{% if page_obj.number == num %} active{% endif %}">
+            <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+            <a class="page-link" href="{% if page_obj.has_next %}?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}{% else %}#{% endif %}">Proxima</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}

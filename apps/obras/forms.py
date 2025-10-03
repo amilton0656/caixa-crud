@@ -9,6 +9,6 @@ class ObraForm(forms.ModelForm):
         fields = ['nome', 'endereco', 'municipio']
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome da obra'}),
-            'endereco': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Endereco'}),
-            'municipio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Municipio'}),
+            'endereco': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Endereço'}),
+            'municipio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Município'}),
         }

@@ -1,4 +1,4 @@
-from django.db import models
+﻿from django.db import models
 from django.utils import timezone
 
 from apps.centros_custos.models import CentroCusto
@@ -17,7 +17,8 @@ class Movimento(models.Model):
     centro_custos = models.ForeignKey(CentroCusto, on_delete=models.PROTECT, related_name='movimentos')
     data = models.DateField(default=timezone.now)
     sinal = models.CharField(max_length=1, choices=SINAL_CHOICES)
-    historico = models.TextField()
+    valor = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    historico = models.TextField(verbose_name='Histórico')
 
     class Meta:
         db_table = 'movimento'
